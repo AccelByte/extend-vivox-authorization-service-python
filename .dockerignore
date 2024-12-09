@@ -1,0 +1,5 @@
+venv/
+.cache/
+.docker/
+.local/
+.env
