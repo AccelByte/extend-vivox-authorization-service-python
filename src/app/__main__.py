@@ -25,7 +25,7 @@ from accelbyte_grpc_plugin.app import (
     AppOptionGRPCInterceptor,
     AppOptionGRPCService,
 )
-from accelbyte_grpc_plugin.ctypes import PermissionAction
+from accelbyte_grpc_plugin.utils import instrument_sdk_http_client
 
 from app.proto.service_pb2_grpc import add_ServiceServicer_to_server
 
@@ -36,8 +36,6 @@ DEFAULT_APP_PORT: int = 6565
 
 DEFAULT_AB_BASE_URL: str = "https://test.accelbyte.io"
 DEFAULT_AB_NAMESPACE: str = "accelbyte"
-DEFAULT_AB_CLIENT_ID: Optional[str] = None
-DEFAULT_AB_CLIENT_SECRET: Optional[str] = None
 
 DEFAULT_ENABLE_HEALTH_CHECK: bool = True
 DEFAULT_ENABLE_PROMETHEUS: bool = True
@@ -45,10 +43,8 @@ DEFAULT_ENABLE_REFLECTION: bool = True
 DEFAULT_ENABLE_ZIPKIN: bool = True
 
 DEFAULT_PLUGIN_GRPC_SERVER_AUTH_ENABLED: bool = True
-DEFAULT_PLUGIN_GRPC_SERVER_AUTH_RESOURCE: Optional[
-    str
-] = "ADMIN:NAMESPACE:{namespace}:VIVOX:TOKEN"
-DEFAULT_PLUGIN_GRPC_SERVER_AUTH_ACTION: Optional[int] = int(PermissionAction.READ)
+DEFAULT_PLUGIN_GRPC_SERVER_AUTH_RESOURCE: Optional[str] = None
+DEFAULT_PLUGIN_GRPC_SERVER_AUTH_ACTION: Optional[int] = None
 
 DEFAULT_PLUGIN_GRPC_SERVER_LOGGING_ENABLED: bool = False
 DEFAULT_PLUGIN_GRPC_SERVER_METRICS_ENABLED: bool = True
@@ -57,10 +53,15 @@ DEFAULT_PLUGIN_GRPC_SERVER_METRICS_ENABLED: bool = True
 async def main(port: int, **kwargs) -> None:
     env = create_env(**kwargs)
 
+    logger = logging.getLogger("app")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
+
     config = DictConfigRepository(dict(env.dump()))
     token = InMemoryTokenRepository()
     http = HttpxHttpClient()
     http.client.follow_redirects = True
+
     sdk = AccelByteSDK()
     sdk.initialize(
         options={
@@ -69,14 +70,15 @@ async def main(port: int, **kwargs) -> None:
             "http": http,
         }
     )
+
+    instrument_sdk_http_client(sdk=sdk, logger=logger)
+
     _, error = await auth_service.login_client_async(sdk=sdk)
     if error:
         raise Exception(str(error))
+    
     sdk.timer = auth_service.LoginClientTimer(2880, repeats=-1, autostart=True, sdk=sdk)
 
-    logger = logging.getLogger("app")
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
     options = create_options(sdk=sdk, env=env, logger=logger)
 
     ds_provider = env("DS_PROVIDER", "DEMO")
@@ -88,7 +90,6 @@ async def main(port: int, **kwargs) -> None:
         domain=env("VIVOX_DOMAIN", "tla.vivox.com"),
         token_duration=env.int("VIVOX_TOKEN_DURATION", 90),
     )
-
     options.append(
         AppOptionGRPCService(
             full_name=service.full_name,
