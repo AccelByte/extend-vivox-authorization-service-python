@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   app:
     build: .
@@ -16,6 +14,9 @@ services:
       - BASE_PATH
       - LOKI_URL=http://host.docker.internal:3100/loki/api/v1/push
       - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://host.docker.internal:9411/api/v2/spans
+      - VIVOX_DOMAIN
+      - VIVOX_ISSUER
+      - VIVOX_SIGNING_KEY
     extra_hosts:
       - host.docker.internal:host-gateway
     # logging:
