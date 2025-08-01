@@ -28,7 +28,7 @@ from accelbyte_grpc_plugin.app import (
 )
 from accelbyte_grpc_plugin.utils import instrument_sdk_http_client
 
-from app.proto.service_pb2_grpc import add_ServiceServicer_to_server
+from service_pb2_grpc import add_ServiceServicer_to_server
 
 from app.services.vivox_service import AsyncVivoxService
 from app.utils import create_env

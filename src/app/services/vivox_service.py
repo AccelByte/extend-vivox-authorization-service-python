@@ -17,14 +17,14 @@ from grpc import StatusCode
 
 from accelbyte_grpc_plugin.utils import create_aio_rpc_error
 
-from ..proto.service_pb2 import (
+from service_pb2 import (
     GenerateVivoxTokenRequest,
     GenerateVivoxTokenRequestType,
     GenerateVivoxTokenRequestChannelType,
     GenerateVivoxTokenResponse,
     DESCRIPTOR,
 )
-from ..proto.service_pb2_grpc import ServiceServicer
+from service_pb2_grpc import ServiceServicer
 
 
 encoding: str = "utf-8"
