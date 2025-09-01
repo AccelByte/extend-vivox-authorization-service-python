@@ -58,26 +58,3 @@ run_gateway: proto
 				go run main.go --grpc-addr host.docker.internal:6565
 
 build: build_server build_gateway
-
-imagex:
-	docker buildx inspect $(BUILDER) || docker buildx create --name $(BUILDER) --use
-	docker buildx build --tag $(IMAGE_NAME) --platform linux/amd64 .
-	docker buildx build --tag $(IMAGE_NAME) --load .
-	docker buildx rm --keep-state $(BUILDER)
-
-imagex_push:
-	@test -n "$(IMAGE_TAG)" || (echo "IMAGE_TAG is not set (e.g. 'v0.1.0', 'latest')"; exit 1)
-	@test -n "$(REPO_URL)" || (echo "REPO_URL is not set"; exit 1)
-	docker buildx inspect $(BUILDER) || docker buildx create --name $(BUILDER) --use
-	docker buildx build --tag $(REPO_URL):$(IMAGE_TAG) --platform linux/amd64 --push .
-	docker buildx rm --keep-state $(BUILDER)
-
-test_docs_broken_links:
-	@test -n "$(SDK_MD_CRAWLER_PATH)" || (echo "SDK_MD_CRAWLER_PATH is not set" ; exit 1)
-	rm -f test.err
-	bash "$(SDK_MD_CRAWLER_PATH)/md-crawler.sh" \
-			-i README.md
-	(for FILE in $$(find docs -type f); do \
-			(set -o pipefail; DOCKER_SKIP_BUILD=1 bash "$(SDK_MD_CRAWLER_PATH)/md-crawler.sh" -i $$FILE) || touch test.err; \
-	done)
-	[ ! -f test.err ]
