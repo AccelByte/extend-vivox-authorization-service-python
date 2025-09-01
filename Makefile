@@ -29,7 +29,7 @@ build_gateway: proto
 		-e GOPATH=/data/.cache/go-path \
 		-v $$(pwd):/data \
 		-w /data/gateway \
-		golang:1.20-alpine3.19 \
+		golang:1.24-alpine3.21 \
 		go build -modcacherw -o grpc_gateway
 
 run_server:
@@ -54,7 +54,7 @@ run_gateway: proto
 		-w /data/gateway \
 		-p 8000:8000 \
 		--add-host host.docker.internal:host-gateway \
-		golang:1.20-alpine3.19 \
+		golang:1.24-alpine3.21 \
 				go run main.go --grpc-addr host.docker.internal:6565
 
 build: build_server build_gateway
