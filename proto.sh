@@ -62,3 +62,6 @@ protoc-wrapper \
   --openapiv2_opt logtostderr=true \
   --openapiv2_opt use_go_templates=true \
   "${PROTO_DIR}"/*.proto
+
+# Remove google directory since the protobuf package already includes it.
+rm -rf src/google
