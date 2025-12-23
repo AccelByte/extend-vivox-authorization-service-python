@@ -15,8 +15,6 @@ from typing import Any, Dict, Optional
 from google.protobuf.json_format import MessageToJson
 from grpc import StatusCode
 
-from accelbyte_grpc_plugin.utils import create_aio_rpc_error
-
 from service_pb2 import (
     GenerateVivoxTokenRequest,
     GenerateVivoxTokenRequestType,
@@ -179,27 +177,32 @@ class AsyncVivoxService(ServiceServicer):
         self.log_payload(f"{self.GenerateVivoxToken.__name__} request: %s", request)
 
         if not request.type:
-            raise create_aio_rpc_error("type not found", StatusCode.INVALID_ARGUMENT)
+            await context.abort(StatusCode.INVALID_ARGUMENT, "type not found")
+            return  # Never reached, but needed for type checking
 
         if not request.username:
-            raise create_aio_rpc_error("username not found", StatusCode.INVALID_ARGUMENT)
+            await context.abort(StatusCode.INVALID_ARGUMENT, "username not found")
+            return  # Never reached, but needed for type checking
 
         if request.type in (GenerateVivoxTokenRequestType.kick,) and not request.targetUsername:
-            raise create_aio_rpc_error("targetUsername not found", StatusCode.INVALID_ARGUMENT)
+            await context.abort(StatusCode.INVALID_ARGUMENT, "targetUsername not found")
+            return  # Never reached, but needed for type checking
 
         if request.type in (
             GenerateVivoxTokenRequestType.join,
             GenerateVivoxTokenRequestType.join_muted,
             GenerateVivoxTokenRequestType.kick
         ) and not request.channelId:
-            raise create_aio_rpc_error("channelId not found", StatusCode.INVALID_ARGUMENT)
+            await context.abort(StatusCode.INVALID_ARGUMENT, "channelId not found")
+            return  # Never reached, but needed for type checking
 
         if request.type in (
             GenerateVivoxTokenRequestType.join,
             GenerateVivoxTokenRequestType.join_muted,
             GenerateVivoxTokenRequestType.kick
         ) and not request.channelType:
-            raise create_aio_rpc_error("channelType not found", StatusCode.INVALID_ARGUMENT)
+            await context.abort(StatusCode.INVALID_ARGUMENT, "channelType not found")
+            return  # Never reached, but needed for type checking
 
         channel_type = vivox_channel_types.get(request.channelType, "")
 
@@ -223,7 +226,8 @@ class AsyncVivoxService(ServiceServicer):
             )
             response.uri = t
         else:
-            raise create_aio_rpc_error(f"unimplemented type: {request.type}", StatusCode.UNIMPLEMENTED)
+            await context.abort(StatusCode.UNIMPLEMENTED, f"unimplemented type: {request.type}")
+            return  # Never reached, but needed for type checking
 
         response.accessToken = token.decode(encoding=encoding)
 
