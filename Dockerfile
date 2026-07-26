@@ -5,7 +5,7 @@
 # ----------------------------------------
 # Stage 1: Protoc Code Generation
 # ----------------------------------------
-FROM --platform=$BUILDPLATFORM rvolosatovs/protoc:4.1.0 AS proto-builder
+FROM --platform=$BUILDPLATFORM rvolosatovs/protoc:v7.0.0 AS proto-builder
 
 # Set working directory.
 WORKDIR /build
@@ -56,7 +56,7 @@ RUN go build -v -o /output/$TARGETOS/$TARGETARCH/grpc_gateway .
 # ----------------------------------------
 # Stage 3: gRPC Server Builder
 # ----------------------------------------
-FROM ubuntu:22.04 AS grpc-server-builder
+FROM ubuntu:26.04 AS grpc-server-builder
 
 ARG TARGETOS
 ARG TARGETARCH
