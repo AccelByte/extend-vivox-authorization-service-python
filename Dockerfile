@@ -23,7 +23,7 @@ RUN chmod +x proto.sh && \
 # ----------------------------------------
 # Stage 2: gRPC Gateway Builder
 # ----------------------------------------
-FROM --platform=$BUILDPLATFORM golang:1.24 AS grpc-gateway-builder
+FROM --platform=$BUILDPLATFORM golang:1.26 AS grpc-gateway-builder
 
 ARG TARGETOS
 ARG TARGETARCH
