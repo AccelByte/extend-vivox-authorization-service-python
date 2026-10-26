@@ -116,7 +116,7 @@ RUN ln -sf /usr/bin/python3 /build/venv/bin/python3
 # ----------------------------------------
 # Stage 4: Runtime Container
 # ----------------------------------------
-FROM ubuntu/python:3.10-22.04_stable
+FROM ubuntu/python:3.14-26.04_stable
 
 # Keeps Python from generating .pyc files in the container.
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -131,6 +131,16 @@ WORKDIR /app
 COPY --from=grpc-server-builder /usr/bin/bash /usr/bin/bash
 COPY --from=grpc-server-builder /usr/bin/kill /usr/bin/kill
 COPY --from=grpc-server-builder /usr/bin/sleep /usr/bin/sleep
+# The 26.04 chiseled image ships a minimal library set. Pull in what the
+# copied binaries and wheels need at runtime:
+#   libstdc++                          -> grpcio's _cython extension
+#   libsystemd, libselinux, libpcre2-8 -> coreutils `sleep`, used by wrapper.sh
+COPY --from=grpc-server-builder \
+    /usr/lib/*-linux-gnu/libstdc++.so.6* \
+    /usr/lib/*-linux-gnu/libsystemd.so.0* \
+    /usr/lib/*-linux-gnu/libselinux.so.1* \
+    /usr/lib/*-linux-gnu/libpcre2-8.so.0* \
+    /usr/lib/
 COPY --from=grpc-server-builder /etc/passwd /etc/passwd
 COPY --from=grpc-server-builder /etc/group /etc/group
 COPY --from=grpc-server-builder /build/ .
