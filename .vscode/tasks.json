@@ -1,0 +1,218 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run: App",
+      "type": "shell",
+      "command": "${workspaceFolder}/venv/bin/python",
+      "args": [
+        "-m",
+        "app"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "src"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: Gateway",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "."
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/gateway",
+        "env": {
+          "BASE_PATH": "${input:basePath}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: App and Gateway",
+      "dependsOn": [
+        "Run: Gateway",
+        "Run: App"
+      ],
+      "dependsOrder": "parallel"
+    },
+    {
+      "label": "Proto: Generate",
+      "type": "shell",
+      "command": "${workspaceFolder}/proto.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Format (Black)",
+      "type": "shell",
+      "command": "${workspaceFolder}/venv/bin/black",
+      "args": [
+        "${input:path}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Create .env File",
+      "type": "shell",
+      "command":  "fillenv",
+      "args": [
+        "${workspaceFolder}/.env.template"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Login to Docker",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "docker-login",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Create App",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "create-app",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}",
+        "--json", { "value": "{\"scenario\":\"${input:appScenario}\"}", "quoting": "strong" },
+        "--yes",
+        "--wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Build and Upload Image",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "image-upload",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}",
+        "--image-tag", "${input:appImageTag}",
+        "--work-dir", "${workspaceFolder}",
+        "--retry-limit", "3"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Deploy",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "deploy-app",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}",
+        "--json", { "value": "{\"imageTag\":\"${input:appImageTag}\"}", "quoting": "strong" },
+        "--wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Start App",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "start-app",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}",
+        "--wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Extend: Stop App",
+      "type": "shell",
+      "command":  "ags",
+      "args": [
+        "extend",
+        "stop-app",
+        "--namespace", "${input:appNamespace}",
+        "--app", "${input:appName}",
+        "--wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "path",
+      "type": "promptString",
+      "description": "Target path",
+      "default": "src"
+    },
+    {
+      "id": "basePath",
+      "type": "promptString",
+      "description": "Gateway BASE_PATH env",
+      "default": "/service"
+    },
+    {
+      "id": "appNamespace",
+      "type": "promptString",
+      "description": "Namespace"
+    },
+    {
+      "id": "appName",
+      "type": "promptString",
+      "description": "App Name"
+    },
+    {
+      "id": "appScenario",
+      "type": "pickString",
+      "description": "Scenario",
+      "options": [
+        "event-handler",
+        "function-override",
+        "service-extension"
+      ]
+    },
+    {
+      "id": "appImageTag",
+      "type": "promptString",
+      "description": "Image Tag",
+      "default": "v0.1.0"
+    }
+  ]
+}
